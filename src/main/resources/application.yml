@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: futureschole
+  datasource:
+    url: jdbc:postgresql://localhost:5432/futureschole
+    username: futureschole
+    password: futureschole
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+notification:
+  worker:
+    batch-size: 20
+    lock-duration: 30s
+    dispatch-fixed-delay: 2s
+    recovery-fixed-delay: 30s
+  retry:
+    max-attempts: 5
+    initial-delay: 10s
+    multiplier: 3
+    max-delay: 15m
