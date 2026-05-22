@@ -26,7 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@DisplayName("알림 delivery claim")
+@DisplayName("알림 발송 작업 처리 권한 선점")
 class NotificationClaimRepositoryTest {
 
     @Autowired
@@ -61,7 +61,7 @@ class NotificationClaimRepositoryTest {
     }
 
     @Test
-    @DisplayName("두 Worker가 같은 delivery를 동시에 claim해도 하나만 성공한다")
+    @DisplayName("두 Worker가 같은 알림 발송 작업을 동시에 가져가려 해도 하나만 처리 권한을 얻는다")
     void onlyOneWorkerCanClaimSameDelivery() throws Exception {
         NotificationRequest request = notificationRequestRepository.saveAndFlush(
                 NotificationRequest.create(

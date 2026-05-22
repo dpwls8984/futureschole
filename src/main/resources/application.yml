@@ -30,6 +30,8 @@ springdoc:
 
 notification:
   worker:
+    enabled: true
+    id: ${HOSTNAME:local-worker}
     batch-size: 20
     lock-duration: 30s
     dispatch-fixed-delay: 2s

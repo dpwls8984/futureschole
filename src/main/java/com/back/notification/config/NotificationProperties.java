@@ -18,10 +18,28 @@ public class NotificationProperties {
     }
 
     public static class Worker {
+        private boolean enabled = true;
+        private String id = "local-worker";
         private int batchSize = 20;
         private Duration lockDuration = Duration.ofSeconds(30);
         private Duration dispatchFixedDelay = Duration.ofSeconds(2);
         private Duration recoveryFixedDelay = Duration.ofSeconds(30);
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
 
         public int getBatchSize() {
             return batchSize;

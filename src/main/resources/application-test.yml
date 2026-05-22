@@ -9,3 +9,8 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+
+notification:
+  worker:
+    enabled: false
+    id: test-worker
