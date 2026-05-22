@@ -4,11 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@DisplayName("재시도 정책")
 class RetryPolicyTest {
 
     @Test
+    @DisplayName("시도 횟수에 따라 지수 백오프 방식으로 다음 처리 가능 시각을 계산한다")
     void nextAvailableAtAppliesExponentialBackoff() {
         RetryPolicy retryPolicy = new RetryPolicy(
                 5,
