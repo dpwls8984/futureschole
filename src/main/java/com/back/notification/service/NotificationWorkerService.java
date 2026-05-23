@@ -112,6 +112,7 @@ public class NotificationWorkerService {
                 .orElseThrow(() -> new ServiceException(ErrorCode.DELIVERY_NOT_FOUND));
         NotificationAttempt attempt = NotificationAttempt.start(
                 delivery,
+                delivery.getRetryCycle(),
                 delivery.getAttemptCount(),
                 workerId(),
                 now

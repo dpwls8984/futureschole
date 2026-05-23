@@ -3,9 +3,12 @@ package com.back.notification.web;
 import com.back.global.exception.ErrorResponse;
 import com.back.notification.web.dto.CreateNotificationRequest;
 import com.back.notification.web.dto.CreateNotificationResponse;
+import com.back.notification.web.dto.ManualRetryRequest;
+import com.back.notification.web.dto.ManualRetryResponse;
 import com.back.notification.web.dto.NotificationDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @Tag(name = "알림 API", description = "알림 요청 등록과 발송 상태 관리를 위한 API")
 public interface NotificationControllerSpec {
@@ -213,5 +217,82 @@ public interface NotificationControllerSpec {
     ResponseEntity<NotificationDetailResponse> getNotificationDetail(
             @Parameter(description = "알림 요청 ID", example = "1")
             @PathVariable Long notificationId
+    );
+
+    @Operation(
+            summary = "최종 실패 알림 수동 재시도",
+            description = """
+                    운영자가 최종 실패(`FAILED`) 상태의 발송 작업을 다시 대기 상태로 돌립니다.
+
+                    * 과거 시도 이력은 `notification_attempts`에 보존합니다.
+                    * 수동 재시도 시 delivery의 `attemptCount`는 현재 재시도 사이클 기준으로 0으로 초기화합니다.
+                    * 대신 `retryCycle`과 `manualRetryCount`를 증가시키고, 수동 재시도 요청 자체는 별도 이력으로 보관합니다.
+                    * 다음 Worker 처리 시 `retryCycle`이 증가된 상태에서 `attemptNo=1`부터 새로 기록되므로 과거 시도 이력과 충돌하지 않습니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "수동 재시도 접수 완료",
+                    content = @Content(
+                            schema = @Schema(implementation = ManualRetryResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "notificationId": 1,
+                                      "requestedBy": "admin-1",
+                                      "reason": "외부 이메일 서버 장애 복구 후 재시도합니다.",
+                                      "requestedAt": "2026-05-23T11:00:00",
+                                      "retriedDeliveryCount": 1,
+                                      "deliveries": [
+                                        {
+                                          "deliveryId": 1,
+                                          "channel": "EMAIL",
+                                          "status": "PENDING",
+                                          "retryCycle": 1,
+                                          "attemptCount": 0,
+                                          "manualRetryCount": 1
+                                        }
+                                      ]
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "알림 요청을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "수동 재시도 가능한 최종 실패 알림이 없음",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "error": {
+                                        "code": "NOTIFICATION_MANUAL_RETRY_NOT_ALLOWED",
+                                        "status": "409",
+                                        "message": "수동 재시도 가능한 최종 실패 알림이 없습니다."
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    })
+    @PostMapping("/{notificationId}/retry")
+    ResponseEntity<ManualRetryResponse> retryFailedNotification(
+            @Parameter(description = "알림 요청 ID", example = "1")
+            @PathVariable Long notificationId,
+
+            @Parameter(
+                    name = "X-Admin-Id",
+                    description = "수동 재시도를 요청한 운영자 ID",
+                    required = true,
+                    in = ParameterIn.HEADER,
+                    example = "admin-1"
+            )
+            @RequestHeader("X-Admin-Id") String requestedBy,
+
+            @Valid @RequestBody ManualRetryRequest request
     );
 }

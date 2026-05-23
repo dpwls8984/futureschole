@@ -50,6 +50,12 @@ public class NotificationDelivery {
     @Column(name = "attempt_count", nullable = false)
     private int attemptCount;
 
+    @Column(name = "retry_cycle", nullable = false)
+    private int retryCycle;
+
+    @Column(name = "manual_retry_count", nullable = false)
+    private int manualRetryCount;
+
     @Column(name = "max_attempts", nullable = false)
     private int maxAttempts;
 
@@ -97,6 +103,8 @@ public class NotificationDelivery {
         this.channel = channel;
         this.status = DeliveryStatus.PENDING;
         this.attemptCount = 0;
+        this.retryCycle = 0;
+        this.manualRetryCount = 0;
         this.maxAttempts = maxAttempts;
         this.availableAt = availableAt;
     }
@@ -152,6 +160,16 @@ public class NotificationDelivery {
         clearLock();
     }
 
+    public void markManualRetryScheduled(LocalDateTime availableAt) {
+        this.status = DeliveryStatus.PENDING;
+        this.retryCycle++;
+        this.manualRetryCount++;
+        this.attemptCount = 0;
+        this.availableAt = availableAt;
+        this.failedAt = null;
+        clearLock();
+    }
+
     public boolean canRetry() {
         return attemptCount < maxAttempts;
     }
@@ -197,6 +215,14 @@ public class NotificationDelivery {
 
     public int getAttemptCount() {
         return attemptCount;
+    }
+
+    public int getRetryCycle() {
+        return retryCycle;
+    }
+
+    public int getManualRetryCount() {
+        return manualRetryCount;
     }
 
     public int getMaxAttempts() {

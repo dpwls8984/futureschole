@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_notification_attempt_no",
-                        columnNames = {"notification_delivery_id", "attempt_no"}
+                        columnNames = {"notification_delivery_id", "retry_cycle", "attempt_no"}
                 )
         }
 )
@@ -35,6 +35,9 @@ public class NotificationAttempt {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "notification_delivery_id", nullable = false)
     private NotificationDelivery notificationDelivery;
+
+    @Column(name = "retry_cycle", nullable = false)
+    private int retryCycle;
 
     @Column(name = "attempt_no", nullable = false)
     private int attemptNo;
@@ -67,11 +70,13 @@ public class NotificationAttempt {
 
     private NotificationAttempt(
             NotificationDelivery notificationDelivery,
+            int retryCycle,
             int attemptNo,
             String workerId,
             LocalDateTime startedAt
     ) {
         this.notificationDelivery = notificationDelivery;
+        this.retryCycle = retryCycle;
         this.attemptNo = attemptNo;
         this.workerId = workerId;
         this.startedAt = startedAt;
@@ -79,11 +84,12 @@ public class NotificationAttempt {
 
     public static NotificationAttempt start(
             NotificationDelivery notificationDelivery,
+            int retryCycle,
             int attemptNo,
             String workerId,
             LocalDateTime startedAt
     ) {
-        return new NotificationAttempt(notificationDelivery, attemptNo, workerId, startedAt);
+        return new NotificationAttempt(notificationDelivery, retryCycle, attemptNo, workerId, startedAt);
     }
 
     public void markSucceeded(LocalDateTime finishedAt) {
@@ -118,6 +124,10 @@ public class NotificationAttempt {
 
     public NotificationDelivery getNotificationDelivery() {
         return notificationDelivery;
+    }
+
+    public int getRetryCycle() {
+        return retryCycle;
     }
 
     public int getAttemptNo() {

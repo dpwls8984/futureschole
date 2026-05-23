@@ -16,6 +16,8 @@ class NotificationResponseMapper {
                 delivery.getChannel(),
                 delivery.getStatus(),
                 delivery.getAttemptCount(),
+                delivery.getRetryCycle(),
+                delivery.getManualRetryCount(),
                 delivery.getMaxAttempts(),
                 delivery.getAvailableAt(),
                 delivery.getLastFailureCode(),

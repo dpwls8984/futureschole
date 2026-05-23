@@ -19,6 +19,12 @@ public record DeliveryResponse(
         @Schema(description = "현재까지 시도 횟수", example = "0")
         int attemptCount,
 
+        @Schema(description = "현재 재시도 사이클 번호. 최초 자동 발송은 0", example = "0")
+        int retryCycle,
+
+        @Schema(description = "운영자가 수동 재시도를 요청한 횟수", example = "0")
+        int manualRetryCount,
+
         @Schema(description = "최대 시도 횟수", example = "5")
         int maxAttempts,
 

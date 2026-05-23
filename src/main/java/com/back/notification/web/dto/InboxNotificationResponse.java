@@ -13,6 +13,9 @@ public record InboxNotificationResponse(
         @Schema(description = "알림 요청 ID", example = "1")
         Long notificationId,
 
+        @Schema(description = "인앱 채널 발송 작업 ID", example = "1")
+        Long deliveryId,
+
         @Schema(description = "알림 타입", example = "COURSE_STARTING_TOMORROW")
         NotificationType notificationType,
 
@@ -27,6 +30,9 @@ public record InboxNotificationResponse(
 
         @Schema(description = "알림 메시지 생성에 사용된 참조 데이터")
         Map<String, Object> referenceData,
+
+        @Schema(description = "읽음 여부", example = "false")
+        boolean read,
 
         @Schema(description = "사용자 알림함 노출 시각", example = "2026-05-22T19:30:00")
         LocalDateTime visibleAt,

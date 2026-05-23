@@ -6,13 +6,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.back.notification.domain.NotificationDelivery;
+import com.back.notification.domain.NotificationRequest;
+import com.back.notification.enums.DeliveryChannel;
+import com.back.notification.enums.DeliveryStatus;
+import com.back.notification.enums.DispatchChannel;
+import com.back.notification.enums.FailureType;
+import com.back.notification.enums.NotificationType;
 import com.back.notification.infrastructure.persistence.NotificationAttemptRepository;
 import com.back.notification.infrastructure.persistence.NotificationDeliveryRepository;
 import com.back.notification.infrastructure.persistence.NotificationInboxRepository;
+import com.back.notification.infrastructure.persistence.NotificationManualRetryRepository;
 import com.back.notification.infrastructure.persistence.NotificationRequestRepository;
 import com.back.notification.web.dto.CreateNotificationRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
 import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,11 +56,24 @@ class NotificationControllerTest {
     private NotificationAttemptRepository notificationAttemptRepository;
 
     @Autowired
+    private NotificationManualRetryRepository notificationManualRetryRepository;
+
+    @Autowired
     private NotificationInboxRepository notificationInboxRepository;
 
     @BeforeEach
     void setUp() {
+        deleteAll();
+    }
+
+    @AfterEach
+    void tearDown() {
+        deleteAll();
+    }
+
+    private void deleteAll() {
         notificationInboxRepository.deleteAll();
+        notificationManualRetryRepository.deleteAll();
         notificationAttemptRepository.deleteAll();
         notificationDeliveryRepository.deleteAll();
         notificationRequestRepository.deleteAll();
@@ -210,5 +233,58 @@ class NotificationControllerTest {
         mockMvc.perform(get("/notifications/{notificationId}", 99999L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("NOTIFICATION_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("최종 실패 알림을 수동 재시도하면 발송 작업이 새 재시도 사이클의 PENDING 상태가 된다")
+    void retryFailedNotificationResetsDeliveryForManualRetry() throws Exception {
+        NotificationRequest request = notificationRequestRepository.saveAndFlush(
+                NotificationRequest.create(
+                        "user-manual-api-1",
+                        NotificationType.PAYMENT_CONFIRMED,
+                        "payment-manual-api-1",
+                        DispatchChannel.EMAIL,
+                        "{}"
+                )
+        );
+        NotificationDelivery delivery = NotificationDelivery.createPending(
+                request,
+                DeliveryChannel.EMAIL,
+                1,
+                LocalDateTime.of(2026, 5, 23, 12, 0)
+        );
+        delivery.claim("failed-worker", LocalDateTime.of(2026, 5, 23, 12, 1));
+        delivery.markFailed(
+                FailureType.RETRYABLE,
+                "SMTP_BUSY",
+                "SMTP 서버가 계속 바쁩니다",
+                LocalDateTime.of(2026, 5, 23, 12, 2)
+        );
+        NotificationDelivery savedDelivery = notificationDeliveryRepository.saveAndFlush(delivery);
+
+        mockMvc.perform(post("/notifications/{notificationId}/retry", request.getId())
+                        .header("X-Admin-Id", "admin-api-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "reason": "외부 이메일 서버 장애 복구 후 재시도합니다."
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.notificationId").value(request.getId()))
+                .andExpect(jsonPath("$.requestedBy").value("admin-api-1"))
+                .andExpect(jsonPath("$.retriedDeliveryCount").value(1))
+                .andExpect(jsonPath("$.deliveries[0].deliveryId").value(savedDelivery.getId()))
+                .andExpect(jsonPath("$.deliveries[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.deliveries[0].retryCycle").value(1))
+                .andExpect(jsonPath("$.deliveries[0].attemptCount").value(0))
+                .andExpect(jsonPath("$.deliveries[0].manualRetryCount").value(1));
+
+        NotificationDelivery retriedDelivery = notificationDeliveryRepository.findById(savedDelivery.getId())
+                .orElseThrow();
+        assertThat(retriedDelivery.getStatus()).isEqualTo(DeliveryStatus.PENDING);
+        assertThat(retriedDelivery.getRetryCycle()).isEqualTo(1);
+        assertThat(retriedDelivery.getAttemptCount()).isZero();
+        assertThat(notificationManualRetryRepository.count()).isEqualTo(1);
     }
 }
