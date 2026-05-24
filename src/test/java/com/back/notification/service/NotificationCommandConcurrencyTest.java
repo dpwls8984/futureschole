@@ -153,10 +153,10 @@ class NotificationCommandConcurrencyTest {
     private ConcurrentChannelResult createNotificationOrConflict(DispatchChannel channel) {
         CreateNotificationRequest request = new CreateNotificationRequest(
                 "user-concurrent-3",
-                NotificationType.COURSE_CANCELED,
-                "course-cancel-concurrent-1",
+                NotificationType.PAYMENT_CANCELED,
+                "payment-cancel-concurrent-1",
                 channel,
-                Map.of("courseId", "course-concurrent-3")
+                Map.of("paymentId", "payment-concurrent-3")
         );
 
         try {

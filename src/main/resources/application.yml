@@ -38,6 +38,6 @@ notification:
     recovery-fixed-delay: 30s
   retry:
     max-attempts: 5
-    initial-delay: 10s
-    multiplier: 3
-    max-delay: 15m
+    initial-delay: 2s
+    multiplier: 2
+    max-delay: 32s

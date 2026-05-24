@@ -152,22 +152,22 @@ class NotificationControllerTest {
         String emailBody = """
                 {
                   "recipientId": "user-1001",
-                  "notificationType": "COURSE_CANCELED",
-                  "eventId": "course-cancel-1",
+                  "notificationType": "PAYMENT_CANCELED",
+                  "eventId": "payment-cancel-1",
                   "channel": "EMAIL",
                   "referenceData": {
-                    "courseId": "course-1"
+                    "paymentId": "payment-1"
                   }
                 }
                 """;
         String inAppBody = """
                 {
                   "recipientId": "user-1001",
-                  "notificationType": "COURSE_CANCELED",
-                  "eventId": "course-cancel-1",
+                  "notificationType": "PAYMENT_CANCELED",
+                  "eventId": "payment-cancel-1",
                   "channel": "IN_APP",
                   "referenceData": {
-                    "courseId": "course-1"
+                    "paymentId": "payment-1"
                   }
                 }
                 """;

@@ -76,9 +76,9 @@ public class NotificationProperties {
 
     public static class Retry {
         private int maxAttempts = 5;
-        private Duration initialDelay = Duration.ofSeconds(10);
-        private int multiplier = 3;
-        private Duration maxDelay = Duration.ofMinutes(15);
+        private Duration initialDelay = Duration.ofSeconds(2);
+        private int multiplier = 2;
+        private Duration maxDelay = Duration.ofSeconds(32);
 
         public int getMaxAttempts() {
             return maxAttempts;

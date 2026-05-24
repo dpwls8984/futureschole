@@ -163,7 +163,7 @@ class NotificationWorkerServiceTest {
         assertThat(processedCount).isEqualTo(1);
         assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.RETRY_WAITING);
         assertThat(delivery.getAttemptCount()).isEqualTo(1);
-        assertThat(delivery.getAvailableAt()).isEqualTo(WORKER_NOW.plusSeconds(10));
+        assertThat(delivery.getAvailableAt()).isEqualTo(WORKER_NOW.plusSeconds(2));
         assertThat(delivery.getLastFailureType()).isEqualTo(FailureType.RETRYABLE);
         assertThat(delivery.getLastFailureCode()).isEqualTo("SMTP_TIMEOUT");
         assertThat(delivery.getLastFailureMessage()).isEqualTo("SMTP 서버 응답 지연");
@@ -201,7 +201,7 @@ class NotificationWorkerServiceTest {
                 .findByNotificationRequestId(response.notificationId())
                 .get(0);
         assertThat(firstFailedDelivery.getAttemptCount()).isEqualTo(1);
-        assertThat(firstFailedDelivery.getAvailableAt()).isEqualTo(WORKER_NOW.plusSeconds(10));
+        assertThat(firstFailedDelivery.getAvailableAt()).isEqualTo(WORKER_NOW.plusSeconds(2));
 
         firstFailedDelivery.markRetryWaiting(
                 FailureType.RETRYABLE,
@@ -218,7 +218,7 @@ class NotificationWorkerServiceTest {
                 .get(0);
         assertThat(secondFailedDelivery.getStatus()).isEqualTo(DeliveryStatus.RETRY_WAITING);
         assertThat(secondFailedDelivery.getAttemptCount()).isEqualTo(2);
-        assertThat(secondFailedDelivery.getAvailableAt()).isEqualTo(WORKER_NOW.plusSeconds(30));
+        assertThat(secondFailedDelivery.getAvailableAt()).isEqualTo(WORKER_NOW.plusSeconds(4));
         assertThat(notificationAttemptRepository.findByNotificationDeliveryIdOrderByAttemptNoAsc(secondFailedDelivery.getId()))
                 .hasSize(2)
                 .extracting("attemptNo")

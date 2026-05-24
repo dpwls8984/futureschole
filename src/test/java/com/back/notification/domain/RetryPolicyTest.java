@@ -15,14 +15,15 @@ class RetryPolicyTest {
     void nextAvailableAtAppliesExponentialBackoff() {
         RetryPolicy retryPolicy = new RetryPolicy(
                 5,
-                Duration.ofSeconds(10),
-                3,
-                Duration.ofMinutes(15)
+                Duration.ofSeconds(2),
+                2,
+                Duration.ofSeconds(32)
         );
         LocalDateTime now = LocalDateTime.of(2026, 5, 22, 10, 0);
 
-        assertThat(retryPolicy.nextAvailableAt(1, now)).isEqualTo(now.plusSeconds(10));
-        assertThat(retryPolicy.nextAvailableAt(2, now)).isEqualTo(now.plusSeconds(30));
-        assertThat(retryPolicy.nextAvailableAt(3, now)).isEqualTo(now.plusSeconds(90));
+        assertThat(retryPolicy.nextAvailableAt(1, now)).isEqualTo(now.plusSeconds(2));
+        assertThat(retryPolicy.nextAvailableAt(2, now)).isEqualTo(now.plusSeconds(4));
+        assertThat(retryPolicy.nextAvailableAt(3, now)).isEqualTo(now.plusSeconds(8));
+        assertThat(retryPolicy.nextAvailableAt(5, now)).isEqualTo(now.plusSeconds(32));
     }
 }
